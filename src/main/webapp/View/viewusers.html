@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>All Users</title>
+<style>
+
+	html, body {
+    	width: 100%;
+    	overflow-x: hidden;
+	}
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .navigation {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        margin-right:20px;
+        padding: 10px;
+    }
+
+    .navigation a button {
+        padding: 10px;
+        font-size: 1rem;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .navigation a button:hover {
+        background-color: gray;
+        color: #fff;
+    }
+
+    h1.heading {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 24px;
+    }
+
+    .container {
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    table {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    .remove-button {
+        background-color: red;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    .remove-button:hover {
+        background-color: darkred;
+    }
+
+    #pagination {
+        margin-top: 20px;
+    }
+
+    .page-size {
+        margin-top: 10px;
+    }
+
+    #editUserModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    width: 300px;
+    text-align: center;
+    z-index: 1000;
+}
+
+#editUserModal h2 {
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+#editUserModal form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#editUserModal label {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#editUserModal input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+#editUserModal button {
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#editUserModal button:first-of-type {
+    background-color: #28a745;
+    color: white;
+}
+
+#editUserModal button:first-of-type:hover {
+    background-color: #218838;
+}
+
+#editUserModal button:last-of-type {
+    background-color: #dc3545;
+    color: white;
+}
+
+#editUserModal button:last-of-type:hover {
+    background-color: #c82333;
+}
+
+/* Overlay Background */
+#modalOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+</style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+
+    <h1 class="heading">Users</h1>
+
+    <div class="container">
+        <table id="usertable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User ID</th>
+                    <th>Account Number</th>
+                    <th>Email</th>
+                    <th>Available Balance</th>
+                    <th>Gift Card Balance</th>
+                    <th>Bonus</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="pagination"></div>
+    
+    <div class="page-size">
+        <label for="pageSize">Page Size: </label>
+        <input type="number" id="pageSize" value="10" min="1" max="50" onchange="changePageSize(event)" />
+    </div>
+
+    <div id="modalOverlay"></div>
+	<div id="editUserModal">
+	    <h2>Edit User</h2>
+	    <form id="editUserForm">
+	        <input type="hidden" id="editUserId">
+	        <p id="userid"></p>
+	        <label>Name: <input type="text" id="editName"></label>
+	        <label>Email: <input type="text" id="editEmail"></label>
+	        <button type="button" onclick="updateUser()">Save</button>
+	        <button type="button" onclick="closeEditForm()">Cancel</button>
+	    </form>
+	</div>
+
+
+    <script>
+    let currentPage = 0;
+    let pageSize = 10;
+    let totalPages = 0;
+
+    async function fetchUsers(page, size) {
+        try {
+            const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/UserAPI/users?pageno=${page}&pagesize=${size}`);
+            if (!response.ok) throw new Error('Failed to fetch Users');
+            
+            const pagedetails = await response.json();
+            const users = pagedetails.user.content;
+            totalPages = pagedetails.user.totalpage;
+            
+            const tableBody = document.querySelector('#usertable tbody');
+            tableBody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.userid}</td>
+                    <td>${user.accountnumber}</td>
+                    <td>${user.email}</td>
+                    <td>${user.availablebalance}</td>
+                    <td>${user.giftcardbalance}</td>
+                    <td>${user.bonus}</td>
+                    <td>${new Date(user.createdat).toLocaleString()}</td>
+                `;
+                row.onclick = () => openEditForm(user);
+                tableBody.appendChild(row);
+            });
+            updatePaginationControls();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function updatePaginationControls() {
+        document.getElementById('pagination').innerHTML = `
+            <button onclick="changePage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>Previous</button>
+            Page ${currentPage + 1} of ${totalPages}
+            <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages - 1 ? 'disabled' : ''}>Next</button>
+        `;
+    }
+
+    function changePage(newPage) {
+        if (newPage < 0 || newPage >= totalPages) return;
+        currentPage = newPage;
+        fetchUsers(currentPage, pageSize);
+    }
+
+    function changePageSize(event) {
+        pageSize = Math.max(1, Math.min(50, parseInt(event.target.value, 10)));
+        currentPage = 0;
+        fetchUsers(currentPage, pageSize);
+    }
+
+    function openEditForm(user) {
+    	document.getElementById('userid').innerHTML = user.userid;
+        document.getElementById('editUserId').value = user.userid;
+        document.getElementById('editName').value = user.name;
+        document.getElementById('editEmail').value = user.email;
+
+
+        document.getElementById('editUserModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeEditForm() {
+        document.getElementById('editUserModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+    
+    //update user
+    async function updateUser() {
+	    const userid = document.getElementById("editUserId").value;
+	    const name = document.getElementById("editName").value;
+	    const email = document.getElementById("editEmail").value;
+	
+	    const userData = {
+	        name: name,
+	        email: email
+	    };
+	    
+	    const emailRegex = /\S+@\S+\.\S+/;  
+        if (!emailRegex.test(email)) {
+            document.getElementById("errorMessage").innerText = "Please enter a valid email address.";
+            return;
+        }
+	
+	    try {
+	        const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/UserAPI/users/${userid}`, {
+	            method: "PUT",
+	            headers: {
+	                "Content-Type": "application/json",
+	            },
+	            body: JSON.stringify(userData),
+	        });
+	
+	        if (!response.ok) {
+	            throw new Error(`Failed to update user: ${response.statusText}`);
+	        }
+	
+	        alert("User updated successfully!");
+	        closeEditForm();
+	        fetchUsers(currentPage, pageSize);
+	    } catch (error) {
+	        console.error("Error updating user:", error);
+	        alert("Error updating user. Please try again.");
+	    }
+	}
+
+
+    window.onload = function() {
+        fetchUsers(currentPage, pageSize);
+    };
+    </script>
+</body>
+</html>

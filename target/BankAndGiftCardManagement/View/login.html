@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            padding: 20px;
+            border: 2px solid #ddd;
+            width: 320px;
+            text-align: center;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="text"], 
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        input[type="text"]:focus, 
+        input[type="password"]:focus {
+            border-color: #000;
+        }
+
+        input[type="submit"] {
+            width: 90%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #000;
+            border-radius: 4px;
+            background-color: transparent;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: gray;
+            color: #fff;
+        }
+
+        .navigation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .navigation a button {
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .navigation a button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/"><button>Home</button></a>
+    </nav>
+
+    <div class="container">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <input type="text" id="username" name="username" placeholder="Username" required />
+            <input type="text" id="password" name="password" placeholder="Password" required />    
+            <input type="submit" value="Login">
+        </form>
+        <p id="errorMessage" style="color: red;"></p>
+    </div>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function(event) {
+    event.preventDefault(); 
+    
+    const userid = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const endpoint = "http://localhost:8082/BankAndGiftCardManagement/UserAPI/auth";
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userid, password }),
+        });
+
+        if (response.ok) {
+
+            let data = await response.json();
+            if (data?.message === 'Invalid Credentials') {
+                document.getElementById("errorMessage").innerText = "Invalid credentials. Please try again.";
+            }
+            else{
+            	console.log(data);
+            	window.location.href = '/BankAndGiftCardManagement/users/menu';
+            }
+        } else {
+            document.getElementById("errorMessage").innerText = "Invalid credentials. Please try again.";
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("errorMessage").innerText = "An error occurred. Please try again.";
+    }
+});
+
+    </script>
+
+</body>
+</html>

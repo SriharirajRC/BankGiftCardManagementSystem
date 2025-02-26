@@ -1,0 +1,12 @@
+ID,User,Amount,Event ID,Date,Details
+115,SrinivaseaRaj,144.0,Deposit,2025-02-18 20:33:25.430608,Approved
+116,hariraj,1.0,GiftCard,2025-02-18 20:59:14.852779,Giftcard Created
+117,SrinivaseaRaj,300.0,GiftCard,2025-02-18 21:31:47.102342,Giftcard Created
+118,SrinivaseaRaj,2.0,GiftCard,2025-02-18 22:10:32.239155,Giftcard Recharged
+119,SrinivaseaRaj,2.0,GiftCard,2025-02-18 22:28:35.611836,Giftcard Recharged
+120,SrinivaseaRaj,101.0,GiftCard,2025-02-18 23:07:55.672094,Giftcard Redeemed
+121,SrinivaseaRaj,1.0,GiftCard,2025-02-18 23:08:37.044718,Giftcard Redeemed
+122,SrinivaseaRaj,1.0,GiftCard,2025-02-18 23:09:41.389612,Giftcard Redeemed
+123,SrinivaseaRaj,200.0,Bonus,2025-02-18 23:34:52.458093,Bonus Converted
+124,SrinivaseaRaj,4.0,GiftCard,2025-02-18 23:52:33.331416,Giftcard Recharged
+125,SrinivaseaRaj,10.0,GiftCard,2025-02-18 23:55:11.278417,Giftcard Recharged

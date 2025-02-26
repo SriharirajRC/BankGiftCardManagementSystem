@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .profile-container {
+            margin: 20px auto;
+            max-width: 400px;
+            text-align: left;
+            border: 1px solid #000;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .profile-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .profile-item {
+            margin: 10px 0;
+            font-size: 1rem;
+        }
+        .navigation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .navigation a {
+            text-decoration: none;
+        }
+        .navigation button {
+            background-color: #fff;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #000;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .navigation button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+        .buttons {
+            background-color: #fff;
+            display: block;
+            width: 100px;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #000;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .buttons:hover {
+            background-color: gray;
+            color: #fff;
+        }
+        .logoutsection {
+            display: block;
+            max-width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+    
+    <div class="profile-container">
+        <h2>Profile</h2>
+        <div class="profile-item">
+            <span>Name :</span> <span id="profileName"></span>
+        </div>
+        <div class="profile-item">
+            <span>Email :</span> <span id="profileEmail"></span>
+        </div>
+        
+        <!--  User Fields  -->
+        <div id="userFields" style="display: none;">
+            <div class="profile-item">
+                <span>Account Number:</span> <span id="profileAccount"></span>
+            </div>
+            <div class="profile-item">
+                <span>Available Balance:</span> <span id="profileBalance"></span>
+            </div>
+            <div class="profile-item">
+                <span>Gift Card Balance:</span> <span id="profileGiftCardBalance"></span>
+            </div>
+            <div class="profile-item">
+                <span>Bonus:</span> <span id="profileBonus"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookie = cookieArr[i].trim();
+                console.log(cookie);
+                if (cookie.indexOf(name + "=") == 0) {
+                    return cookie.substring(name.length + 1, cookie.length);
+                }
+            }
+            return null;
+        }
+        
+        
+        window.onload = async function() {
+        	let userid = getCookie("userid");
+        	let role = getCookie("role");
+        	
+        	console.log("hu"+userid+" "+role);
+
+            const endpoint = `http://localhost:8082/BankAndGiftCardManagement/UserAPI/users/${userid}`;
+
+            try {
+                const response = await fetch(endpoint);
+
+                if (response.ok) {
+
+                    let data = await response.json();
+                    console.log(data);
+                    let userProfile = data.users;
+
+                        document.getElementById("profileName").textContent = userProfile.name;
+                        document.getElementById("profileEmail").textContent = userProfile.email;
+
+                        if (role === "user") {
+                            document.getElementById("userFields").style.display = "block";
+                            document.getElementById("profileAccount").textContent = userProfile.accountnumber;
+                            document.getElementById("profileBalance").textContent = userProfile.availablebalance;
+                            document.getElementById("profileGiftCardBalance").textContent = userProfile.giftcardbalance;
+                            document.getElementById("profileBonus").textContent = userProfile.bonus;
+                        } 
+                } else {
+                    document.getElementById("errorMessage").innerText = "Invalid credentials. Please try again.";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("errorMessage").innerText = "An error occurred. Please try again.";
+            }
+        };
+        
+    </script>
+</body>
+</html>

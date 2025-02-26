@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>All Transactions</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .navigation {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 20px;
+        }
+        .navigation a button {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .navigation a button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+        .heading {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+        .container {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: center;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        #pagination, .page-size {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        #pagination button, .page-size input {
+            padding: 8px 12px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+    <h1 class="heading">Transactions</h1>
+
+    <div class="container">
+        <table id="transactionsTable">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Amount</th>
+                    <th>Event Type</th>
+                    <th>Event Date</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="pagination">
+        <button onclick="changePage(currentPage - 1)">Previous</button>
+        <span>Page 1</span>
+        <button onclick="changePage(currentPage + 1)">Next</button>
+    </div>
+
+    <div class="page-size">
+        <label for="pageSize">Page Size: </label>
+        <input type="number" id="pageSize" value="10" min="1" max="10" onchange="changePageSize(event)" />
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+        let totalPages = 0;
+
+        async function fetchTransactions(page, size) {
+            try {
+            	
+				let userid= getCookie("userid");
+                
+				if (!userid) {
+					console.error("User ID not found in cookies.");
+					return;
+				}
+				
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/TransactionAPI/users/transactions?username=${userid}&pageno=${page}&pagesize=${size}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch transactions');
+                }
+                const pagedetails = await response.json();
+                const transactions = pagedetails.transactions.content;
+                totalPages = pagedetails.transactions.totalpage;
+                const tableBody = document.querySelector('#transactionsTable tbody');
+                tableBody.innerHTML = '';
+                transactions.forEach(transaction => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${transaction.id}</td>
+                        <td>${transaction.amount}</td>
+                        <td>${transaction.eventname}</td>
+                        <td>${new Date(transaction.eventdate).toLocaleString()}</td>
+                        <td>${transaction.details}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                updatePaginationControls();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function updatePaginationControls() {
+            document.getElementById('pagination').innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>Previous</button>
+                Page ${currentPage + 1} of ${totalPages}
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages - 1 ? 'disabled' : ''}>Next</button>
+            `;
+        }
+
+        function changePage(newPage) {
+            if (newPage < 0 || newPage >= totalPages) return;
+            currentPage = newPage;
+            fetchTransactions(currentPage, pageSize);
+        }
+
+        function changePageSize(event) {
+            let newPageSize = parseInt(event.target.value, 10);
+            pageSize = Math.max(1, Math.min(newPageSize, 10));
+            currentPage = 0;
+            fetchTransactions(currentPage, pageSize);
+        }
+        function getCookie(name) {
+            let cookieArr = document.cookie.split("; ");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if (cookiePair[0] === name) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+    		return null;
+    	}
+
+
+        window.onload = function() {
+            fetchTransactions(currentPage, pageSize);
+        }
+    </script>
+</body>
+</html>

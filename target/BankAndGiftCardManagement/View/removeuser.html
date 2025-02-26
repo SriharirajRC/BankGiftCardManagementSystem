@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>All Users</title>
+    <style>
+    
+    	html, body {
+    		width: 100%;
+    		overflow-x: hidden;
+		}
+    	
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .heading {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        th:nth-child(1), td:nth-child(1) { width: 10%; } /* Name */
+        th:nth-child(2), td:nth-child(2) { width: 10%; }  /* User ID */
+        th:nth-child(3), td:nth-child(3) { width: 13%; } /* Account Number */
+        th:nth-child(4), td:nth-child(4) { width: 18%; } /* Email */
+        th:nth-child(5), td:nth-child(5) { width: 8%; } /* Available Balance */
+        th:nth-child(6), td:nth-child(6) { width: 8%; } /* Gift Card Balance */
+        th:nth-child(7), td:nth-child(7) { width: 7%; }  /* Bonus */
+        th:nth-child(8), td:nth-child(8) { width: 15%; } /* Created At */
+
+        .navigation {
+            width: 100%;
+            display: flex;
+            margin-right:20px;
+            justify-content: flex-end;
+            padding: 10px;
+        }
+
+        .navigation a button {
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .navigation a button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+
+        #pagination {
+            margin-top: 20px;
+        }
+
+        .page-size {
+            margin-top: 10px;
+        }
+
+        .page-size label, .page-size input {
+            font-size: 1rem;
+            margin: 0 5px;
+        }
+
+        .remove-button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+
+    <h1 class="heading">Users</h1>
+
+    <div class="container">
+        <table border="1" id="userTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User ID</th>
+                    <th>Account Number</th>
+                    <th>Email</th>
+                    <th>Available Balance</th>
+                    <th>Gift Card Balance</th>
+                    <th>Bonus</th>
+                    <th>Created At</th>
+                    <th>Remove User</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="pagination"></div>
+
+    <div class="page-size">
+        <label for="pageSize">Page Size: </label>
+        <input type="number" id="pageSize" value="10" min="1" max="50" onchange="changePageSize(event)" />
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+        let totalPages = 0;
+
+        async function fetchUsers(page, size) {
+            try {
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/UserAPI/users?pageno=${page}&pagesize=${size}`);
+                if (!response.ok) throw new Error("Failed to fetch users");
+                
+                const pagedetails = await response.json();
+                const users = pagedetails.user.content;
+                totalPages = pagedetails.user.totalpage;
+                
+                const tableBody = document.getElementById("userTableBody");
+                tableBody.innerHTML = "";
+                
+                users.forEach(user => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>${user.userid}</td>
+                        <td>${user.accountnumber}</td>
+                        <td>${user.email}</td>
+                        <td>${user.availablebalance}</td>
+                        <td>${user.giftcardbalance}</td>
+                        <td>${user.bonus}</td>
+                        <td>${new Date(user.createdat).toLocaleString()}</td>
+                        <td><button class="remove-button" onclick="confirmAndRemove('${user.userid}')">Remove</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                updatePaginationControls();
+            } catch (error) {
+                console.error("Error fetching users:", error);
+                alert("Failed to load users. Please try again later.");
+            }
+        }
+
+        function updatePaginationControls() {
+            document.getElementById('pagination').innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>Previous</button>
+                Page ${currentPage + 1} of ${totalPages}
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages - 1 ? 'disabled' : ''}>Next</button>
+            `;
+        }
+
+        function changePage(newPage) {
+            if (newPage < 0 || newPage >= totalPages) return;
+            currentPage = newPage;
+            fetchUsers(currentPage, pageSize);
+        }
+
+        function changePageSize(event) {
+            let newSize = parseInt(event.target.value, 10);
+            pageSize = Math.max(1, Math.min(50, newSize));
+            currentPage = 0;
+            fetchUsers(currentPage, pageSize);
+        }
+
+        async function confirmAndRemove(userid) {
+            if (!confirm("Are you sure you want to remove this user?")) return;
+            try {
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/UserAPI/users/${userid}`, {
+                    method: "DELETE",
+                });
+                if (!response.ok) throw new Error("Failed to remove user");
+                alert("User removed successfully!");
+                fetchUsers(currentPage, pageSize);
+            } catch (error) {
+                console.error("Error removing user:", error);
+                alert("Failed to remove user. Please try again.");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchUsers(currentPage, pageSize);
+        });
+    </script>
+</body>
+</html>

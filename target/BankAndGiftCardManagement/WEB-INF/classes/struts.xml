@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+    "http://struts.apache.org/dtds/struts-2.5.dtd">
+
+<struts>
+
+	<constant name="struts.devMode" value="true" />
+    <constant name="rest" value="org.apache.struts2.rest.RestActionMapper"/>
+    <constant name="struts.mapper.class"   
+        value="org.apache.struts2.dispatcher.mapper.PrefixBasedActionMapper"/>
+     <constant name="struts.mapper.prefixMapping" value="/UserAPI:rest,/RequestsAPI:rest,/GiftcardAPI:rest,/RedeemAPI:rest,:struts"/>
+	
+	
+	<package name="AuthInterceptor" extends ="struts-default">
+		<interceptors>
+            <interceptor name="authInterceptor" class="com.Interceptor.AuthInterceptor"/>
+            <interceptor name="rbaInterceptor" class="com.Interceptor.RBAInterceptor"></interceptor>
+            <interceptor-stack name="authStack">
+                <interceptor-ref name="authInterceptor"/>
+                <interceptor-ref name="rbaInterceptor"/>
+                <interceptor-ref name="defaultStack"/>
+            </interceptor-stack>
+        </interceptors>
+        
+        <global-results>
+            <result name="unauthorized" type="redirect">/unauthorized.jsp</result>
+        </global-results>
+	</package>
+	
+	
+	<package name="LoginresourceLoader" extends="struts-default">
+	
+		<action name="">
+            <result>/View/index.html</result>
+        </action>
+        
+        <action name="signin">
+        	<result>/View/login.html</result>
+        </action>
+        
+        <action name="redeemgiftcard">
+        	<result>/View/redeemgiftcard.html</result>
+        </action>
+    </package>
+    
+	
+	<package name="UserAPI" namespace="/UserAPI" extends="rest-default,json-default,AuthInterceptor">
+	
+	    <default-interceptor-ref name="authStack"/>
+		
+	    <action name="users" class="com.action.UserAction">
+	        <result type="json">
+	            <param name="root">response</param>
+	        </result>
+	    </action>
+	    
+		
+	    <action name="auth" class="com.action.LoginAction">
+	    	<result type="json">
+	    		<param name="root">response</param>
+	    	</result>
+	    </action>	    
+	    
+	    <action name="logout" class="com.action.LoginAction" method="logout">
+		    <result type="json">
+		        <param name="root">response</param>
+		    </result>
+		</action>
+	</package>
+	
+	
+	
+	<package name="DepositRequestAPI" namespace="/RequestsAPI/users" extends="rest-default,json-default,AuthInterceptor">
+		
+		<default-interceptor-ref name="authStack"/>
+		
+		<action name="depositrequests" class="com.action.DepositRequestAction">
+	        <result type="json">
+	            <param name="root">response</param>
+	        </result>
+	    </action>		    
+	</package>
+	
+	
+	<package name="TransactionAPI" namespace="/TransactionAPI/users" extends="rest-default,json-default,AuthInterceptor">
+		
+		<default-interceptor-ref name="authStack"/>
+		
+		<action name="transactions" class="com.action.TransactionLogAction" method="index">
+	        <result type="json">
+	            <param name="root">response</param>
+	        </result>
+	    </action>
+			    
+	</package>
+	
+	<package name="GiftcardAPI" namespace="/GiftcardAPI/users" extends="rest-default,json-default,AuthInterceptor">
+		
+		<default-interceptor-ref name="authStack"/>
+				
+		<action name="giftcards" class="com.action.GiftcardAction">
+	        <result type="json">
+	            <param name="root">response</param>
+	        </result>
+	    </action>
+			    
+	</package>
+	
+	<package name="RedeemAPI" namespace="/RedeemAPI/users" extends="rest-default,json-default,AuthInterceptor">
+		
+		<action name="giftcards" class="com.action.RedeemAction">
+	        <result type="json">
+	            <param name="root">response</param>
+	        </result>
+	    </action>
+			    
+	</package>
+	
+	
+	<package name="userLoader" namespace="/users" extends="AuthInterceptor">
+    
+    	<default-interceptor-ref name="authStack"/>
+    	
+		<action name="profile">
+        	<result>/View/profile.html</result>
+        </action>    
+        
+        <action name="menu">
+        	<result>/View/menu.html</result>
+        </action>
+        
+        <action name="createuser">
+        	<result>/View/createuser.html</result>
+        </action>
+        
+        <action name="viewusers">
+        	<result>/View/viewusers.html</result>
+        </action>
+        
+        <action name="removeuser">
+        	<result>/View/removeuser.html</result>
+        </action>
+        
+        <action name="viewallrequests">
+        	<result>/View/viewallrequests.html</result>
+        </action>
+        
+        <action name="viewalltransactions">
+        	<result>/View/viewalltransactions.html</result>
+        </action>
+        
+        <action name="viewallgiftcards">
+        	<result>/View/viewallgiftcards.html</result>
+        </action>
+        
+        <action name="changepassword">
+        	<result>/View/changepassword.html</result>
+        </action>
+        
+        <action name="requestmoney">
+        	<result>/View/requestmoney.html</result>
+        </action>
+        
+        <action name="viewmyrequests">
+        	<result>/View/viewmyrequests.html</result>
+        </action>
+        
+        <action name="generategiftcard">
+        	<result>/View/generategiftcard.html</result>
+        </action>
+        
+        <action name="viewmygiftcards">
+        	<result>/View/viewmygiftcards.html</result>
+        </action>
+        
+        <action name="viewmytransactions">
+        	<result>/View/viewmytransactions.html</result>
+        </action>
+        
+        <action name="rechargegiftcard">
+        	<result>/View/rechargegiftcard.html</result>
+        </action>
+        
+        <action name="convertbonus">
+        	<result>/View/convertbonus.html</result>
+        </action>
+    </package>
+    
+</struts>

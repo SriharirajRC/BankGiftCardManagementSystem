@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Menu</title>
+  <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .menu-container {
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        a:visited {
+            text-decoration: underline;
+            color: inherit; 
+        }
+        button {
+            background-color: #fff;
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #000;
+            border-radius: 4px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+        .navigation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .navigation a {
+            text-decoration: none;
+        }
+        .navigation button {
+            background-color: #fff;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #000;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .navigation button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/profile"><button id="profileBtn">Profile</button></a>
+    </nav>
+
+    <!-- Manager Menu -->
+    <div id="managerMenu" style="display: none;">
+        <h1>Manager Menu</h1>
+        <div class="menu-container">
+            <a href="/BankAndGiftCardManagement/users/createuser"><button>Create New User</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewusers"><button>View User</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewallrequests"><button>Approve/Reject Requests</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewallgiftcards"><button>View All Gift Cards</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewalltransactions"><button>View All Transactions</button></a>
+            <a href="/BankAndGiftCardManagement/users/removeuser"><button>Remove User</button></a>
+        </div>
+    </div>
+
+    <!-- User Menu -->
+    <div id="userMenu" style="display: none;">
+        <h1>User Menu</h1>
+        <div class="menu-container">
+            <a href="/BankAndGiftCardManagement/users/requestmoney"><button>Request Money</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewmyrequests"><button>View Requests Status</button></a>
+            <a href="/BankAndGiftCardManagement/users/generategiftcard"><button>Generate Gift Card</button></a>
+            <a href="/BankAndGiftCardManagement/users/rechargegiftcard"><button>Recharge Gift Cards</button></a>
+            <a href="/BankAndGiftCardManagement/users/convertbonus"><button>Convert Bonus</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewmytransactions"><button>View All Transactions</button></a>
+            <a href="/BankAndGiftCardManagement/users/viewmygiftcards"><button>View All Gift Cards</button></a>
+            <a href="/BankAndGiftCardManagement/users/changepassword"><button>Change Password</button></a>
+        </div>
+    </div>
+    
+    <div id="newuserMenu" style="display: none;">
+        <h1>User Menu</h1>
+        <div class="menu-container">
+			<a href="/BankAndGiftCardManagement/users/changepassword"><button>Change Password</button></a>
+		</div>
+    	
+    </div>
+    
+    <div style="width:70px;margin-left:680px">
+    	<button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookie = cookieArr[i].trim();
+                if (cookie.indexOf(name + "=") == 0) {
+                    return cookie.substring(name.length + 1, cookie.length);
+                }
+            }
+            return null;
+        }
+        
+        let newuser = getCookie("newuser");
+        
+        console.log("USER-------" +newuser);
+        
+        if (newuser !== null) {
+        	console.log("USER 2");
+            document.getElementById("newuserMenu").style.display = "block";
+        }
+        else{
+        
+	        let role = getCookie("role");
+	        
+	        console.log("Role : "+role);
+	
+	        if (role === "manager") {
+	            document.getElementById("managerMenu").style.display = "block";
+	        } else if (role === "user") {
+	            document.getElementById("userMenu").style.display = "block";
+	        } else {
+	            alert("No role cookie found");
+	        }
+        }
+
+        function deleteAllCookies() {
+            document.cookie.split(";").forEach(cookie => {
+                document.cookie = cookie.split("=")[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            });
+        }
+        
+        function logout() {
+            deleteAllCookies();
+            window.location.href = "/BankAndGiftCardManagement/signin"; 
+        }
+    </script>
+</body>
+</html>

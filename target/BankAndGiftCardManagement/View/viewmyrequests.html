@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>All Requests</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+        	margin-top:30px;
+            width: 100%;
+            background: #f8f8f8;
+            padding: 15px 0;
+            text-align: center;
+            position: fixed;
+            top: 200;
+            z-index: 1500;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .controls {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #fff;
+            position: fixed;
+            top: 60px;
+            z-index: 1000;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .controls label {
+            font-weight: bold;
+        }
+        .controls select {
+            padding: 5px;
+            margin-left: 5px;
+        }
+        .container {
+            width: 80%;
+            max-width: 900px;
+            margin-top: 120px; /* Adjust based on fixed header height */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .table-container {
+            width: 100%;
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 300px; /* Ensures table doesn't shrink */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            table-layout: fixed;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .pagination {
+            width: 100%;
+            background: #f8f8f8;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            position: fixed;
+            bottom: 0;
+            z-index: 1000;
+            box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .pagination button {
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            margin: 0 5px;
+            border-radius: 4px;
+        }
+        .pagination button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+
+.navigation {
+    position: absolute;
+    top: 15px; /* Increased from 10px to 15px */
+    right: 15px; /* More space from the edge */
+}
+
+.controls {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    background: #fff;
+    position: fixed;
+    top: 90px; /* Adjusted for header */
+    z-index: 1000;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    width: 80%;
+    max-width: 900px;
+    margin-top: 150px; /* Adjusted for fixed header and filters */
+}
+    </style>
+</head>
+<body>
+	<nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+
+    <h1 class="header">Requests</h1>
+
+    <div class="controls">
+        <div>
+            <label for="orderby">Sort By Date:</label>
+            <select id="orderby" onchange="changeOrder(event)">
+                <option value="desc" selected>Newest First</option>
+                <option value="asc">Oldest First</option>
+            </select>
+        </div>
+        <div>
+            <label for="filter">Filter By Status:</label>
+            <select id="filter" onchange="changeFilter(event)">
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="table-container">
+            <table id="requeststable">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Amount</th>
+                        <th>Request Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="pagination">
+        <button onclick="changePage(currentPage - 1)" id="prevBtn">Previous</button>
+        <span id="pageInfo">Page 1</span>
+        <button onclick="changePage(currentPage + 1)" id="nextBtn">Next</button>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+        let totalPages = 0;
+        let filter = 'pending';
+        let orderby = 'desc';
+        let userid = getCookie("userid");
+
+        async function fetchRequests(page, size) {
+            try {
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/RequestsAPI/users/depositrequests?username=${userid}&pageno=${page}&pagesize=${size}&filter=${filter}&orderby=${orderby}`);
+                if (!response.ok) throw new Error("Failed to fetch Requests");
+                const pagedetails = await response.json();
+
+                const requests = pagedetails.user.content;
+                totalPages = pagedetails.user.totalpage;
+
+                const tableBody = document.getElementById("requestsbody");
+                tableBody.innerHTML = "";
+
+                requests.forEach(request => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${request.userid}</td>
+                        <td>${request.requestedamount}</td>
+                        <td>${new Date(request.requesteddate).toLocaleString()}</td>
+                        <td>${request.status}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                updatePaginationControls();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function updatePaginationControls() {
+            document.getElementById("pageInfo").innerText = `Page ${currentPage + 1} of ${totalPages}`;
+            document.getElementById("prevBtn").disabled = currentPage === 0;
+            document.getElementById("nextBtn").disabled = currentPage >= totalPages - 1;
+        }
+
+        function changePage(newPage) {
+            if (newPage < 0 || newPage >= totalPages) return;
+            currentPage = newPage;
+            fetchRequests(currentPage, pageSize);
+        }
+
+        function changeOrder(event) {
+            orderby = event.target.value;
+            currentPage = 0;
+            fetchRequests(currentPage, pageSize);
+        }
+
+        function changeFilter(event) {
+            filter = event.target.value;
+            currentPage = 0;
+            fetchRequests(currentPage, pageSize);
+        }
+
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for (let cookie of cookieArr) {
+                let [key, value] = cookie.trim().split("=");
+                if (key === name) return value;
+            }
+            return null;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchRequests(currentPage, pageSize);
+        });
+    </script>
+</body>
+</html>

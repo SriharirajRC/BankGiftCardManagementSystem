@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Generate Gift Card</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    padding: 20px;
+    border: 2px solid #ddd;
+    width: 320px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+input[type="text"], 
+input[type="password"], 
+select {
+    width: 90%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+}
+
+input[type="text"]:focus, 
+input[type="password"]:focus, 
+select:focus {
+    border-color: #000;
+}
+
+input[type="submit"] {
+    width: 90%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+input[type="submit"]:hover {
+    background-color: gray;
+    color: #fff;
+}
+
+.navigation {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.navigation a button {
+    padding: 10px;
+    font-size: 1rem;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.navigation a button:hover {
+    background-color: gray;
+    color: #fff;
+}
+
+
+</style>
+</head>
+<body>
+	
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+    
+    <div class="container">
+  		<h1>Generate Gift Card</h1>
+        <form id="giftcardform">
+            <p>Available Amount :</p><p id="availableamount"></p>
+            <input type="text" id="enteredamount" name="enteredamount" placeholder="Amount" required />
+            <input type="text" id="pin" name="pin" placeholder="6 Digit Pin" required />	
+            <input class="submitinp" type="submit" value="Generate">
+        </form>
+
+        <p id="errorMessage" style="color: red;"></p>
+    </div>
+
+    <script>
+        document.getElementById("giftcardform").addEventListener("submit",
+            async function (event) {
+                event.preventDefault(); 
+                const amount = document.getElementById("enteredamount").value.trim();
+                const pin = document.getElementById("pin").value.trim();
+                const errorMessage = document.getElementById("errorMessage");
+                
+                errorMessage.innerText = "";
+
+                if (!amount || isNaN(amount) || amount <= 0 || amount > 20000) {
+                    errorMessage.innerText = "Please enter a valid amount between 1 and 20,000.";
+                    return;
+                }
+
+                if (!/^\d{6}$/.test(pin)) {
+                    errorMessage.innerText = "PIN must be exactly 6 digits.";
+                    return;
+                }
+
+                const userConfirmed = confirm("Are you sure you want to generate a Gift Card?");
+                if (!userConfirmed) return;
+
+                let ownerofgiftcard = getCookie("userid");
+                if (!ownerofgiftcard) {
+                    errorMessage.innerText = "Error: User ID not found.";
+                    return;
+                }
+
+                const endpoint = `http://localhost:8082/BankAndGiftCardManagement/GiftcardAPI/users/giftcards`;
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            ownerofgiftcard,
+                            amount: parseFloat(amount), // Ensure it's sent as a number
+                            pin
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        alert(`Gift Card Generated: ${data.code}`);
+                        window.location.href = "/BankAndGiftCardManagement/users/viewmygiftcards";
+                    } else {
+                        errorMessage.innerText = "Generation Failed. Please try again.";
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    errorMessage.innerText = "An error occurred. Please try again.";
+                }
+            }
+        );
+
+        function getCookie(name) {
+            let cookieArr = document.cookie.split("; ");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if (cookiePair[0] === name) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+        
+        async function printAmount() {
+            try {
+                let userid = getCookie("userid");
+                if (!userid) {
+                    console.error("User ID not found in cookies.");
+                    document.getElementById("availableamount").innerText = "Error loading balance.";
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/UserAPI/users/${userid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("availableamount").innerText = data.users.availablebalance;
+                } else {    
+                    document.getElementById("availableamount").innerText = "Failed to load balance.";
+                }
+            } catch (error) {
+                console.error("Error fetching balance:", error);
+                document.getElementById("availableamount").innerText = "Error loading balance.";
+            }        
+        }
+
+        window.onload = printAmount;
+    </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>All Gift Cards</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            width: 100%;
+        }
+        .heading {
+            margin-top: 20px;
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .navigation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .navigation a button {
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .navigation a button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+        #pagination, .page-size {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .page-size label, .page-size input {
+            font-size: 1rem;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+    <h1 class="heading">Gift Cards</h1>
+    <div class="container">
+        <table id="giftcardsTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Pin</th>
+                    <th>Amount</th>
+                    <th>Generated Date</th>
+                </tr>
+            </thead>
+            <tbody id="giftcardsBody"></tbody>
+        </table>
+    </div>
+    <div id="pagination">
+        <button onclick="changePage(currentPage - 1)" id="prevBtn">Previous</button>
+        <span id="pageInfo">Page 1</span>
+        <button onclick="changePage(currentPage + 1)" id="nextBtn">Next</button>
+    </div>
+    <div class="page-size">
+        <label for="pageSize">Page Size: </label>
+        <input type="number" id="pageSize" value="10" min="1" max="10" onchange="changePageSize(event)" />
+    </div>
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+        let totalPages = 0;
+        async function fetchGiftCards(page, size) {
+            try {
+            	
+            	let userid= getCookie("userid");
+                
+				if (!userid) {
+					console.error("User ID not found in cookies.");
+					return;
+				}
+				
+				
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/GiftcardAPI/users/giftcards?username=${userid}&pageno=${page}&pagesize=${size}`);
+                if (!response.ok) throw new Error("Failed to fetch Gift Cards");
+                const pagedetails = await response.json();
+                const giftcards = pagedetails.giftcards.content;
+                totalPages = pagedetails.giftcards.totalpage;
+                const tableBody = document.getElementById("giftcardsBody");
+                tableBody.innerHTML = "";
+                giftcards.forEach(giftcard => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${giftcard.code}</td>
+                        <td>${giftcard.pin}</td>
+                        <td>${giftcard.amount}</td>
+                        <td>${new Date(giftcard.generatedtime).toLocaleString()}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                updatePaginationControls();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+        function updatePaginationControls() {
+            document.getElementById("pageInfo").innerText = `Page ${currentPage + 1} of ${totalPages}`;
+            document.getElementById("prevBtn").disabled = currentPage === 0;
+            document.getElementById("nextBtn").disabled = currentPage === totalPages - 1;
+        }
+        function changePage(newPage) {
+            if (newPage < 0 || newPage >= totalPages) return;
+            currentPage = newPage;
+            fetchGiftCards(currentPage, pageSize);
+        }
+        function changePageSize(event) {
+            let newPageSize = parseInt(event.target.value, 10);
+            if (newPageSize < 1) newPageSize = 1;
+            else if (newPageSize > 10) newPageSize = 10;
+            pageSize = newPageSize;
+            currentPage = 0;
+            fetchGiftCards(currentPage, pageSize);
+        }
+        function getCookie(name) {
+            let cookieArr = document.cookie.split("; ");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if (cookiePair[0] === name) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+    		return null;
+    	}
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchGiftCards(currentPage, pageSize);
+        });
+    </script>
+</body>
+</html>
+

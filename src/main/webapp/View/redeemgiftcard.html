@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Redeem Giftcard</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    padding: 20px;
+    border: 2px solid #ddd;
+    width: 320px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+input[type="text"], 
+input[type="password"], 
+select {
+    width: 90%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+}
+
+input[type="text"]:focus, 
+input[type="password"]:focus, 
+select:focus {
+    border-color: #000;
+}
+
+input[type="submit"] {
+    width: 90%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+input[type="submit"]:hover {
+    background-color: gray;
+    color: #fff;
+}
+
+.navigation {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.navigation a button {
+    padding: 10px;
+    font-size: 1rem;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.navigation a button:hover {
+    background-color: gray;
+    color: #fff;
+}
+</style>
+</head>
+<body>
+	
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/"><button>Menu</button></a>
+    </nav>
+    
+    <div class="container">
+  		<h1>Redeem Gift card</h1>
+        <form id="redeemform">
+            <input type="text" id="code" placeholder="Card Code" required />	
+            <input type="text" id="pin" placeholder="6 Digit Pin" required />
+            <div id ="availblock" style="display:none">
+            	Available Amount : <p id = "availamount"></p>
+            </div>
+            <input type="text" id="amount" placeholder="Amount" required />
+            <input class="submitinp" type="submit" value="Redeem">
+        </form>
+
+        <p id="errorMessage" style="color: red;"></p>
+    </div>
+
+    <script>
+        document.getElementById("redeemform").addEventListener("submit",
+            async function (event) {
+                event.preventDefault(); 
+                const code = document.getElementById("code").value;
+                const pin = document.getElementById("pin").value;
+                const amount = document.getElementById("amount").value;
+
+                if (isNaN(amount) || amount < 0 || amount > 20000) {
+                    document.getElementById("errorMessage").innerText = "Please enter a valid amount between 0 and 20,000.";
+                    return;
+                }
+
+
+                const userConfirmed = confirm("Are you sure you want to Redeem the amount?");
+                if (!userConfirmed) {
+                    return;
+                }
+
+                const endpoint = `http://localhost:8082/BankAndGiftCardManagement/RedeemAPI/users/giftcards/${code}`;
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({pin, amount}),
+                    });
+
+                    if (response.ok) {
+                        let data = await response.json();
+                        if(data?.error === "Giftcard Not Found"){
+                            document.getElementById("errorMessage").innerText = data.error;
+                    	}
+                        else if (data?.error === 'Invalid Pin') {
+                            document.getElementById('availblock').style.display = 'none';
+                            document.getElementById("errorMessage").innerText = "Invalid Pin. Please try again.";
+                        }
+                        else if(data?.error === 'Insufficient balance in gift card.'){
+                            document.getElementById('availblock').style.display = 'block';
+                        	document.getElementById("errorMessage").innerText = "Insufficent Balance in gift card";
+                        	document.getElementById("availamount").innerText = data.availamount;
+                        }
+                        else{
+                        	alert('Redeemed Successfully');
+                        	window.location.href = "/BankAndGiftCardManagement/";
+                        }
+                        
+                    } else {
+                        document.getElementById("errorMessage").innerText = "Failed, Please try again.";
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    document.getElementById("errorMessage").innerText = "An error occurred. Please try again.";
+                }
+            }
+        );
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>All Requests</title>
+        <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .heading {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .navigation {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .navigation a button {
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .navigation a button:hover {
+            background-color: gray;
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+        }
+        table {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .pagination, .page-size {
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navigation">
+        <a href="/BankAndGiftCardManagement/users/menu"><button>Menu</button></a>
+    </nav>
+    <h1 class="heading">Requests</h1>
+
+    <div class="container">
+        <label for="orderby">Sort By Date:</label>
+        <select id="orderby" onchange="changeOrder(event)">
+            <option value="desc" selected>Newest First</option>
+            <option value="asc">Oldest First</option>
+        </select>
+
+        <table id="requeststable">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Amount</th>
+                    <th>Request Date</th>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                </tr>
+            </thead>
+            <tbody id="requestsbody">
+            </tbody>
+        </table>
+    </div>
+
+    <div id="pagination">
+        <button onclick="changePage(currentPage - 1)" id="prevBtn">Previous</button>
+        <span id="pageInfo">Page 1</span>
+        <button onclick="changePage(currentPage + 1)" id="nextBtn">Next</button>
+    </div>
+
+    <div class="page-size">
+        <label for="pageSize">Page Size: </label>
+        <input type="number" id="pageSize" value="10" min="1" max="10" onchange="changePageSize(event)" />
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+        let totalPages = 0;
+        let filter = 'pending';
+        let orderby = 'desc';
+
+        async function fetchRequests(page, size) {
+            try {
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/RequestsAPI/users/depositrequests?pageno=${page}&pagesize=${size}&filter=${filter}&orderby=${orderby}`);
+                if (!response.ok) throw new Error("Failed to fetch Requests");
+                const pagedetails = await response.json();
+
+                const requests = pagedetails.user.content;
+                totalPages = pagedetails.user.totalpage;
+
+                const tableBody = document.getElementById("requestsbody");
+                tableBody.innerHTML = "";
+
+                requests.forEach(request => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${request.userid}</td>
+                        <td>${request.requestedamount}</td>
+                        <td>${new Date(request.requesteddate).toLocaleString()}</td>
+                        <td><button onclick="handleAction('${request.id}', 'approve')">Approve</button></td>
+                        <td><button onclick="handleAction('${request.id}', 'reject')">Reject</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                updatePaginationControls();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function updatePaginationControls() {
+            document.getElementById("pageInfo").innerText = `Page ${currentPage + 1} of ${totalPages}`;
+            document.getElementById("prevBtn").disabled = currentPage === 0;
+            document.getElementById("nextBtn").disabled = currentPage === totalPages - 1;
+        }
+
+        function changePage(newPage) {
+            if (newPage < 0 || newPage >= totalPages) return;
+            currentPage = newPage;
+            fetchRequests(currentPage, pageSize);
+        }
+
+        function changePageSize(event) {
+            let newPageSize = parseInt(event.target.value, 10);
+            if (newPageSize < 1) newPageSize = 1;
+            else if (newPageSize > 10) newPageSize = 10;
+
+            pageSize = newPageSize;
+            currentPage = 0;
+            fetchRequests(currentPage, pageSize);
+        }
+
+        function changeOrder(event) {
+            orderby = event.target.value; // Update sorting order
+            currentPage = 0;
+            fetchRequests(currentPage, pageSize);
+        }
+
+        async function handleAction(id, status) {
+            try {
+                const response = await fetch(`http://localhost:8082/BankAndGiftCardManagement/RequestsAPI/users/depositrequests/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status })
+                });
+
+                if (response.ok) {
+                    alert(`Request ${status}d successfully!`);
+                    fetchRequests(currentPage, pageSize);
+                } else {
+                    alert("Action failed. Try again.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred. Try again later.");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchRequests(currentPage, pageSize);
+        });
+    </script>
+</body>
+</html>
